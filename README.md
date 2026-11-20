@@ -18,12 +18,14 @@ flowchart LR
 
 | | URL |
 |---|---|
-| Frontend | `https://<your-frontend>.vercel.app` ← replace after deploying |
-| Backend | `https://<your-backend>.onrender.com` ← replace after deploying |
-| Health | `https://<your-backend>.onrender.com/health` |
+| Frontend | https://lyftr-chat.onrender.com |
+| Backend | https://lyftr-chat-api-eeog.onrender.com |
+| Health | https://lyftr-chat-api-eeog.onrender.com/health |
 | Demo video | `<link>` |
 
-> The backend runs on Render's free plan, which sleeps after 15 minutes idle. The first request after a pause can take ~50 s; open `/health` once before testing.
+Both tiers run on Render (backend as a Docker web service, frontend as a static site), with `ENABLE_FAILURE_SIMULATION=true` on the backend. `python backend/scripts/contract_check.py https://lyftr-chat-api-eeog.onrender.com` passes all 26 checks against the live deployment.
+
+> The backend runs on Render's free plan, which sleeps after 15 minutes idle. The first request after a pause can take ~50 s; open `/health` once before testing. The free plan also has no persistent disk, so live history resets on a redeploy or spin-down; locally (`make up`) it lives on the `app-data` volume and survives restarts.
 
 ## 2. Run locally: with Docker and without
 
@@ -37,7 +39,7 @@ make down                     # stop (history stays in the volume)
 make clean                    # stop and delete the volume
 ```
 
-`make up` builds both multi-stage images and starts them with `docker-compose.yml`. SQLite and the LiteLLM disk cache live on the named volume `app-data` mounted at `/data`, so `docker compose restart` keeps every session. If Docker Hub rate-limits your pulls, set `DOCKER_REGISTRY_MIRROR=mirror.gcr.io/library/` in `.env`.
+`make up` builds both multi-stage images and starts them with `docker-compose.yml`. SQLite and the LiteLLM disk cache live on the named volume `app-data` mounted at `/data`, so `docker compose restart` keeps every session. If Docker Hub rate-limits your pulls, set `DOCKER_REGISTRY_MIRROR=mirror.gcr.io/library/` in `.env`. If port 3000 is taken on your machine, set `FRONTEND_PORT=3001` in `.env` and add `http://localhost:3001` to `ALLOWED_ORIGINS`.
 
 Free keys: [Google AI Studio](https://aistudio.google.com/apikey). Create each key in a **different Google Cloud project**; keys in the same project share one quota and would fail over into the same rate limit.
 
