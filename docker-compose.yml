@@ -1,0 +1,45 @@
+# `make up` (or `docker compose up -d --build`) starts the whole stack:
+#   backend  -> http://localhost:8000
+#   frontend -> http://localhost:3000
+# Configuration comes from .env (copy .env.example). SQLite and the LiteLLM disk
+# cache live on the named volume `app-data`, so history survives restarts.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        REGISTRY: ${DOCKER_REGISTRY_MIRROR:-}
+    image: lyftr-chat-backend:latest
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/app.db}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      ENABLE_FAILURE_SIMULATION: ${ENABLE_FAILURE_SIMULATION:-true}
+      CACHE_DIR: ${CACHE_DIR:-/data/llm_cache}
+    ports:
+      - "8000:8000"
+    volumes:
+      - app-data:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REGISTRY: ${DOCKER_REGISTRY_MIRROR:-}
+    image: lyftr-chat-frontend:latest
+    environment:
+      # The browser calls this URL directly, so it must be reachable from the host.
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  app-data:
