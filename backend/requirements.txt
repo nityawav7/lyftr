@@ -1,0 +1,6 @@
+# Pinned: 1.100.x is the latest LiteLLM line whose cache-hit path works without
+# proxy-only extras and that still ships the disk cache backend (removed later).
+litellm==1.100.5
+diskcache==5.6.3
+fastapi==0.165.0
+uvicorn[standard]==0.54.0
